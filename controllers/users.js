@@ -14,7 +14,7 @@ const ForbiddenError = require('../errors/ForbiddenError');
 const { NODE_ENV, JWT_SECRET_KEY } = process.env;
 
 const getUser = (req, res, next) => {
-  User.findById(req.params.userId)
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь не найден');
@@ -30,10 +30,10 @@ const getUser = (req, res, next) => {
 };
 
 const updateUser = (req, res, next) => {
-  const { name, about } = req.body;
+  const { email, name } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
-    { name, about },
+    { email, name },
     { new: true, runValidators: true },
   )
     .then((user) => {
