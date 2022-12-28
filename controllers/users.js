@@ -10,6 +10,7 @@ const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
 const UnauthorizedError = require('../errors/UnauthorizedError');
 const ForbiddenError = require('../errors/ForbiddenError');
+const errorMessage = require('../errors/errorMesages');
 
 const { NODE_ENV, JWT_SECRET_KEY } = process.env;
 
@@ -17,13 +18,13 @@ const getUser = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Пользователь не найден');
+        throw new NotFoundError(errorMessage.notFoundUser);
       }
       return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequestError('Некорректный id'));
+        return next(new BadRequestError(errorMessage.badRequestId));
       }
       return next(err);
     });
@@ -38,13 +39,13 @@ const updateUser = (req, res, next) => {
   )
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Пользователь не найден');
+        throw new NotFoundError(errorMessage.notFoundUser);
       }
       return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректные данные пользователя'));
+        return next(new BadRequestError(errorMessage.badRequestUser));
       }
       return next(err);
     });
@@ -52,7 +53,7 @@ const updateUser = (req, res, next) => {
 
 const signUp = (req, res, next) => {
   const { email, password, name } = req.body;
-  if (!email || !password) throw new BadRequestError('Необходимо указать email и пароль');
+  if (!email || !password) throw new BadRequestError(errorMessage.badRequestSignup);
   return bcrypt.hash(password, SALT_ROUND)
     .then((hash) => User.create({
       email,
@@ -66,10 +67,10 @@ const signUp = (req, res, next) => {
     }))
     .catch((err) => {
       if (err.code === 11000) {
-        return next(new ConflictError('Пользователь с таким email уже существует'));
+        return next(new ConflictError(errorMessage.conflict));
       }
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Некорректный id'));
+        return next(new BadRequestError(errorMessage.badRequestId));
       }
       return next(err);
     });
@@ -81,12 +82,12 @@ const signIn = (req, res, next) => {
     .select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new UnauthorizedError('Неверные почта или пароль'));
+        return Promise.reject(new UnauthorizedError(errorMessage.unauthorizedSignup));
       }
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new ForbiddenError('Неверные почта или пароль'));
+            return Promise.reject(new ForbiddenError(errorMessage.forbiddenSignup));
           }
           const token = jwt.sign(
             { _id: user._id },

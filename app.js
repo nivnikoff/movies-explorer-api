@@ -37,11 +37,11 @@ mongoose.connect(NODE_ENV === 'production' ? MONGO_DB : 'mongodb://127.0.0.1:270
   useUnifiedTopology: true,
 });
 
+app.use(requestLogger);
+
 app.use(limiter);
 
 app.use(helmet());
-
-app.use(requestLogger);
 
 app.use(routes);
 
